@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HVF Trainer">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#6f6f6f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+<link rel="stylesheet" href="src/styles.css">
+<title>HVF Trainer Pro v4.0.0</title>
+</head>
+<body>
+<div id="app">
+  <div class="panel" id="leftPanel">
+    <button class="panelClose" type="button">Close</button>
+    <h1>HVF Trainer Pro</h1>
+    <div class="badge">v4.0.0</div>
+    <div class="badge">Training / Educational Use Only</div>
+    <div class="notice">Not a medical device. Not for diagnosis, screening, treatment decisions, or patient records.</div>
+
+    <h2>Test setup</h2>
+    <div class="control"><label>Test pattern</label><select id="pattern">
+      <option value="15-check">15 Flash Check</option>
+      <option value="24-2">24-2</option><option value="30-2">30-2</option><option value="10-2">10-2</option>
+    </select></div>
+
+    <div class="control"><label>Clinical/training point count</label><select id="pointCount">
+      <option value="standard">Clinical standard</option>
+      <option value="10">10 points</option>
+      <option value="20">20 points</option>
+      <option value="40">40 points</option>
+      <option value="60">60 points</option>
+      <option value="80">80 points</option>
+      <option value="100">100 points</option>
+      <option value="120">120 points</option>
+      <option value="140">140 points</option>
+    </select></div>
+
+    <div class="grid">
+      <div class="control"><label>Eye</label><select id="eye"><option>Right</option><option>Left</option></select></div>
+      <div class="control"><label>Strategy</label><select id="strategy"><option value="sita">SITA-like training</option><option value="screen">Screening</option><option value="full">Full-threshold training</option></select></div>
+    </div>
+    <div class="control"><label>Simulated defect</label><select id="defect">
+      <option value="normal">Normal</option><option value="mild_glaucoma">Mild glaucoma: arcuate / nasal step</option>
+      <option value="advanced_glaucoma">Advanced glaucoma</option><option value="central">Central scotoma</option>
+      <option value="hemianopia">Left hemianopic loss</option><option value="quadrantanopia">Superior quadrantanopic loss</option>
+      <option value="rim">Rim / lens artifact</option><option value="random">Unreliable/random</option>
+    </select></div>
+    <div class="grid">
+      <div class="control"><label>Patient age</label><input id="age" type="number" min="10" max="100" value="62"></div>
+      <div class="control"><label>Duration</label><select id="duration"><option value="short">Short</option><option value="standard" selected>Standard</option><option value="long">Long</option></select></div>
+    </div>
+
+    <h2>Simulation controls</h2>
+    <div class="control"><label>Response sensitivity <span id="sensitivityVal">85%</span></label><input id="sensitivity" type="range" min="35" max="100" value="85"></div>
+    <div class="control"><label>False-positive tendency <span id="fpTendencyVal">5%</span></label><input id="fpTendency" type="range" min="0" max="35" value="5"></div>
+    <div class="control"><label>Fatigue effect <span id="fatigueVal">10%</span></label><input id="fatigue" type="range" min="0" max="60" value="10"></div>
+    <div class="grid">
+      <div class="control"><label>Flash duration <span id="flashMsVal">200 ms</span></label><input id="flashMs" type="range" min="100" max="500" step="25" value="200"></div>
+      <div class="control"><label>Response window <span id="responseWindowVal">900 ms</span></label><input id="responseWindow" type="range" min="500" max="1600" step="50" value="900"></div>
+    </div>
+    <div class="grid">
+      <div class="control"><label>Screen size, inches</label><input id="screenSize" type="number" min="8" max="15" step="0.1" value="12.9"></div>
+      <div class="control"><label>Viewing distance, cm</label><input id="distance" type="number" min="20" max="60" value="33"></div>
+    </div>
+    <label class="small"><input id="autoPatient" type="checkbox"> Auto-patient demonstration mode</label>
+
+    <h2>Run</h2>
+    <div class="footerBtns">
+      <button class="primary" id="startBtn">Start test</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button class="danger" id="resetBtn">Reset</button>
+    </div>
+    <p class="small">Keep gaze on the central fixation mark. Respond only when a white stimulus is seen. Use touch, mouse, <span class="kbd">Space</span>, <span class="kbd">Enter</span>, Bluetooth keyboard, or adaptive switch input.</p>
+    <p class="small"><a href="docs/user-guide.html">User guide</a> · <a href="docs/ipad-install.html">iPad install guide</a></p>
+  </div>
+
+  <div class="fieldWrap" id="fieldWrap">
+    <div id="mobileBar"><button id="settingsToggle">Settings</button><button id="reportToggle">Report</button></div>
+    <div id="statusOverlay">Ready</div>
+    <canvas id="fieldCanvas" width="900" height="900" aria-label="visual field test area"></canvas>
+    <button id="responseBtn">PATIENT RESPONSE</button>
+    <button id="exitFocusBtn">Exit Focus</button>
+    <div id="miniHUD">Ready</div>
+  </div>
+
+  <div class="panel right" id="rightPanel">
+    <button class="panelClose" type="button">Close</button>
+    <h1>Reliability & report</h1>
+    <div class="stat"><span>Elapsed</span><b id="elapsed">0:00</b></div>
+    <div class="stat"><span>Progress</span><b id="progress">0%</b></div>
+    <div class="stat"><span>Stimuli</span><b id="stimCount">0</b></div>
+    <div class="stat"><span>Seen</span><b id="seenCount">0</b></div>
+    <div class="stat"><span>Fixation losses</span><b id="fixLoss">0 / 0</b></div>
+    <div class="stat"><span>False positives</span><b id="falsePos">0 / 0</b></div>
+    <div class="stat"><span>False negatives</span><b id="falseNeg">0 / 0</b></div>
+    <div class="stat"><span>Mean response time</span><b id="meanRt">—</b></div>
+    <div class="stat"><span>Reliability</span><b id="reliability">—</b></div>
+
+    <div class="reportMaps">
+      <div class="mapBlock"><h2>Threshold map</h2><canvas id="thresholdMap" class="mapCanvas" width="320" height="320"></canvas></div>
+      <div class="mapBlock"><h2>Grayscale</h2><canvas id="grayMap" class="mapCanvas" width="320" height="320"></canvas></div>
+      <div class="mapBlock"><h2>Deviation-style map</h2><canvas id="deviationMap" class="mapCanvas" width="320" height="320"></canvas></div>
+    </div>
+
+    <h2>Simulated report</h2>
+    <div id="report">No test completed.</div>
+    <div class="footerBtns" style="margin-top:10px">
+      <button id="printBtn">Print / PDF</button>
+      <button id="copyBtn">Copy report</button>
+      <button id="exportBtn">Download JSON</button>
+    </div>
+  </div>
+</div>
+<script src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+
+:root{
+  --bg:#808080; --bowl:#808080; --panel:#171717; --panel2:#242424; --text:#f6f6f6; --muted:#bdbdbd;
+  --line:#444; --accent:#f4f4f4; --ok:#7bd88f; --warn:#ffd166; --bad:#ff7a7a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text)}
+button,select,input{font:inherit}
+button{border:1px solid #666;background:#323232;color:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+button.primary{background:#f7f7f7;color:#111;border-color:#fff;font-weight:700}
+button.danger{background:#451d1d;border-color:#7b3333}
+button:disabled{opacity:.45}
+a{color:#fff}
+#app{height:100vh;width:100vw;display:grid;grid-template-columns:350px 1fr 360px;background:#777}
+.panel{background:linear-gradient(#242424,#151515);border-right:1px solid var(--line);padding:14px;overflow:auto}
+.right{border-left:1px solid var(--line);border-right:0}
+h1{font-size:19px;margin:0 0 3px}
+h2{font-size:15px;margin:16px 0 8px;color:#fff}
+h3{font-size:13px;margin:12px 0 6px;color:#ddd}
+.small{font-size:12px;color:var(--muted);line-height:1.38}
+.badge{display:inline-block;padding:3px 8px;border:1px solid #777;border-radius:999px;font-size:11px;color:#ddd;margin:3px 0}
+.notice{border:1px solid #695d2c;background:#302a14;color:#ffe9a2;padding:9px;border-radius:9px;margin:10px 0;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.control{margin-bottom:10px}
+label{display:block;font-size:12px;color:#ccc;margin-bottom:4px}
+select,input[type=number],input[type=text]{width:100%;background:#101010;border:1px solid #555;color:#fff;border-radius:8px;padding:9px}
+input[type=range]{width:100%}
+.fieldWrap{position:relative;background:var(--bg);display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden}
+#fieldCanvas{width:min(100%,calc(100vh*1.15));height:min(100%,calc(100vw*.87));max-width:100%;max-height:100%;background:#808080;border-radius:50%;box-shadow:inset 0 0 92px rgba(0,0,0,.24)}
+#responseBtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:18px 30px;border-radius:999px;border:2px solid #eee;background:rgba(20,20,20,.88);color:white;box-shadow:0 3px 18px rgba(0,0,0,.35);font-weight:800;min-width:230px}
+#responseBtn:active{transform:translateX(-50%) scale(.96);background:#111}
+#statusOverlay{position:absolute;top:18px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:10px;background:rgba(0,0,0,.37);font-size:14px;color:#fff;text-align:center;min-width:160px}
+#miniHUD{position:absolute;left:14px;bottom:14px;background:rgba(0,0,0,.38);padding:8px 10px;border-radius:10px;font-size:12px;color:#eee}
+.stat{display:flex;justify-content:space-between;border-bottom:1px solid #333;padding:6px 0;font-size:13px;gap:10px}
+.stat b{font-variant-numeric:tabular-nums;text-align:right}
+.mapCanvas{width:100%;aspect-ratio:1;border:1px solid #555;background:#eee;border-radius:6px;margin:8px 0}
+#report{font-size:12px;line-height:1.35;white-space:pre-wrap}
+.footerBtns{display:flex;gap:8px;flex-wrap:wrap}
+#mobileBar{position:absolute;z-index:9;left:10px;right:10px;top:10px;display:none;justify-content:space-between;pointer-events:none}
+#mobileBar button{pointer-events:auto;background:rgba(0,0,0,.55)}
+.kbd{display:inline-block;border:1px solid #777;border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:#222;color:#eee}
+@media(max-width:1050px){
+ #app{grid-template-columns:1fr}
+ .panel,.right{position:absolute;z-index:5;top:0;bottom:0;width:min(88vw,360px);transform:translateX(-103%);transition:.2s;box-shadow:0 0 30px #000}
+ .right{right:0;transform:translateX(103%)}
+ .panel.open{transform:translateX(0)}
+ .right.open{transform:translateX(0)}
+ #mobileBar{display:flex}
+}
+@media print{
+ body{overflow:visible;background:white;color:black}
+ #app{display:block;background:white;height:auto}
+ .panel,.fieldWrap,#mobileBar,#responseBtn,#statusOverlay,#miniHUD{display:none!important}
+ .right{display:block;position:static;transform:none!important;width:auto;background:white;color:black;border:0}
+ .right *{color:black!important}
+ button{display:none}
+}
+
+/* v2.3 safe iPad layout: no destructive panel hiding */
+:root { --toolbar-h: 50px; }
+html, body, #app { height: 100dvh !important; overflow: hidden !important; }
+
+/* Main app is always a single full-screen test stage. Panels are overlays. */
+#app {
+  display: block !important;
+  position: relative !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  background: #808080 !important;
+}
+
+.fieldWrap {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #808080 !important;
+  overflow: hidden !important;
+}
+
+/* True circular bowl: square CSS box, never stretched. */
+#fieldCanvas {
+  display: block !important;
+  width: min(calc(100dvw - 24px), calc(100dvh - 86px)) !important;
+  height: min(calc(100dvw - 24px), calc(100dvh - 86px)) !important;
+  max-width: calc(100dvw - 24px) !important;
+  max-height: calc(100dvh - 86px) !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  margin-top: var(--toolbar-h) !important;
+}
+
+/* Persistent toolbar always remains visible and provides return path. */
+#mobileBar {
+  position: fixed !important;
+  z-index: 1000 !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: calc(8px + env(safe-area-inset-top)) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  pointer-events: auto !important;
+}
+#mobileBar .group { display: flex !important; gap: 6px !important; pointer-events: auto !important; }
+#mobileBar button {
+  display: inline-block !important;
+  background: rgba(0,0,0,.72) !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,.75) !important;
+  padding: 8px 10px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+/* Side panels are overlays, never layout columns. */
+.panel, .right {
+  position: fixed !important;
+  z-index: 900 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: min(88dvw, 360px) !important;
+  max-width: 360px !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: calc(58px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 0 30px rgba(0,0,0,.55) !important;
+  transition: transform .18s ease !important;
+}
+#leftPanel {
+  left: 0 !important;
+  transform: translateX(-105%) !important;
+}
+#rightPanel {
+  right: 0 !important;
+  transform: translateX(105%) !important;
+}
+#leftPanel.open { transform: translateX(0) !important; }
+#rightPanel.open { transform: translateX(0) !important; }
+
+/* Close buttons added to panels. */
+.panelClose {
+  position: fixed !important;
+  top: calc(10px + env(safe-area-inset-top)) !important;
+  z-index: 950 !important;
+  background: rgba(0,0,0,.75) !important;
+  border: 1px solid rgba(255,255,255,.7) !important;
+  color: white !important;
+  border-radius: 9px !important;
+  padding: 8px 10px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+#leftPanel .panelClose { right: 10px !important; }
+#rightPanel .panelClose { left: 10px !important; }
+
+/* Compact report panel content. */
+.right h1 { font-size: 16px !important; margin: 0 0 2px !important; }
+.right h2 { margin: 8px 0 4px !important; font-size: 13px !important; }
+.right .stat { padding: 3px 0 !important; font-size: 11.5px !important; }
+.right .mapCanvas {
+  width: 31% !important;
+  max-width: 105px !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  display: inline-block !important;
+  margin: 3px 3px 5px 0 !important;
+  vertical-align: top !important;
+}
+.right #report {
+  font-size: 10.5px !important;
+  line-height: 1.22 !important;
+  max-height: 24dvh !important;
+  overflow: auto !important;
+  border: 1px solid #444 !important;
+  border-radius: 6px !important;
+  padding: 6px !important;
+  background: rgba(0,0,0,.18) !important;
+}
+
+/* Obsolete focus/exit controls are hidden; Test View replaces Focus. */
+#exitFocusBtn { display: none !important; }
+body.focus-mode #leftPanel, body.focus-mode #rightPanel { display: block !important; }
+body.focus-mode #app { display: block !important; }
+
+/* On desktop, still use safe overlay behavior for consistency. */
+@media(min-width:1051px){
+  #fieldCanvas {
+    width: min(calc(100dvw - 34px), calc(100dvh - 88px)) !important;
+    height: min(calc(100dvw - 34px), calc(100dvh - 88px)) !important;
+  }
+}
+
+/* v2.4 independent panels */
+#leftPanel.open { transform: translateX(0) !important; }
+#rightPanel.open { transform: translateX(0) !important; }
+#leftPanel:not(.open) { transform: translateX(-105%) !important; }
+#rightPanel:not(.open) { transform: translateX(105%) !important; }
+
+/* Keep both panels usable if both are open on wider screens */
+@media(min-width:760px){
+  #leftPanel.open { width: min(44dvw, 360px) !important; }
+  #rightPanel.open { width: min(44dvw, 360px) !important; }
+}
+
+/* On narrow portrait screens, panels still overlay from their own sides independently */
+
+/* v2.5 report panel fixes: plots are normal square maps, not circular bowls */
+#rightPanel {
+  background: linear-gradient(#242424,#151515) !important;
+  color: #f6f6f6 !important;
+}
+#rightPanel .reportMaps {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  margin: 8px 0 !important;
+}
+#rightPanel .mapBlock {
+  border: 1px solid #484848 !important;
+  border-radius: 8px !important;
+  padding: 6px !important;
+  background: rgba(255,255,255,.06) !important;
+}
+#rightPanel .mapBlock h2 {
+  margin: 0 0 5px !important;
+  font-size: 12px !important;
+}
+#rightPanel .mapCanvas,
+#thresholdMap,
+#grayMap,
+#deviationMap {
+  display: block !important;
+  width: min(100%, 240px) !important;
+  max-width: 240px !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 6px !important;
+  border: 1px solid #666 !important;
+  background: #fff !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+}
+#rightPanel #report {
+  display: block !important;
+  min-height: 110px !important;
+  max-height: 26dvh !important;
+  overflow-y: auto !important;
+  font-size: 10.5px !important;
+  line-height: 1.25 !important;
+  white-space: pre-wrap !important;
+  background: rgba(0,0,0,.24) !important;
+  border: 1px solid #555 !important;
+  border-radius: 8px !important;
+  padding: 7px !important;
+}
+#rightPanel .stat {
+  font-size: 12px !important;
+  padding: 4px 0 !important;
+}
+@media(min-width:1000px){
+  #rightPanel { width: min(36dvw, 420px) !important; max-width: 420px !important; }
+  #rightPanel .reportMaps { grid-template-columns: 1fr 1fr 1fr !important; }
+  #rightPanel .mapCanvas,
+  #thresholdMap,
+  #grayMap,
+  #deviationMap {
+    width: min(100%, 112px) !important;
+    max-width: 112px !important;
+  }
+}
+
+/* v2.9 Print/PDF report fix */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.45in;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  #app {
+    display: block !important;
+    height: auto !important;
+    width: auto !important;
+    background: white !important;
+  }
+
+  /* Hide simulator/test field and controls when printing */
+  .fieldWrap,
+  #leftPanel,
+  #mobileBar,
+  #responseBtn,
+  #statusOverlay,
+  #miniHUD,
+  #exitFocusBtn,
+  .panelClose,
+  .footerBtns,
+  button {
+    display: none !important;
+  }
+
+  /* Force report panel to be the printable document */
+  #rightPanel {
+    display: block !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  #rightPanel * {
+    color: black !important;
+  }
+
+  #rightPanel h1 {
+    font-size: 18pt !important;
+    margin: 0 0 8pt !important;
+  }
+
+  #rightPanel h2 {
+    font-size: 11pt !important;
+    margin: 10pt 0 4pt !important;
+  }
+
+  #rightPanel .stat {
+    font-size: 10pt !important;
+    padding: 2pt 0 !important;
+    border-bottom: 1px solid #ccc !important;
+    page-break-inside: avoid !important;
+  }
+
+  #rightPanel .reportMaps {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 10pt !important;
+    margin: 10pt 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  #rightPanel .mapBlock {
+    display: block !important;
+    border: 1px solid #999 !important;
+    background: white !important;
+    padding: 5pt !important;
+    border-radius: 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  #rightPanel .mapCanvas,
+  #thresholdMap,
+  #grayMap,
+  #deviationMap {
+    display: block !important;
+    width: 1.75in !important;
+    max-width: 1.75in !important;
+    height: 1.75in !important;
+    max-height: 1.75in !important;
+    aspect-ratio: 1 / 1 !important;
+    border: 1px solid #777 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    margin: 0 auto !important;
+  }
+
+  #rightPanel #report {
+    display: block !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    font-family: Menlo, Consolas, monospace !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+    border: 1px solid #aaa !important;
+    background: white !important;
+    padding: 8pt !important;
+    margin-top: 8pt !important;
+  }
+}
+
+/* v4.0 point-count selector */
+#pointCount {
+  border-color: #777 !important;
+}
